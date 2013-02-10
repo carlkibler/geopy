@@ -14,7 +14,7 @@ except ImportError:
 from geopy.geocoders.base import Geocoder
 
 class GeoNames(Geocoder):
-    def __init__(self, format_string=None, output_format=None, country_bias=None):
+    def __init__(self, username, format_string=None, output_format=None, country_bias=None):
         if format_string != None:
             from warnings import warn
             warn('geopy.geocoders.geonames.GeoNames: The `format_string` parameter is deprecated.'+
@@ -23,9 +23,12 @@ class GeoNames(Geocoder):
             from warnings import warn
             warn('geopy.geocoders.geonames.GeoNames: The `output_format` parameter is deprecated '+
                  'and now ignored.', DeprecationWarning)
-        
+
+        self.username = username
         self.country_bias = country_bias
         self.url = "http://ws.geonames.org/searchJSON?%s"
+        self.reverse_url = "http://api.geonames.org/findNearbyPlaceNameJSON?%s"
+        self.premier = None
     
     def geocode(self, string, exactly_one=True):
         params = {
@@ -78,3 +81,18 @@ class GeoNames(Geocoder):
             return parse_code(places[0])
         else:
             return [parse_code(place) for place in places]
+
+    def reverse(self, point):
+        '''Reverse geocode a point.
+        ``point`` (required) The textual latitude/longitude value for which
+        you wish to obtain the closest, human-readable address
+        '''
+        params = {
+            'lat': point.latitude,
+            'lng': point.longitude,
+            'username': self.username
+        }
+
+        url = self.reverse_url % (urlencode(params))
+
+        return self.geocode_url(url)
